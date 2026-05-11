@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LearnPilot — AI Learning Assistant</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&family=DM+Serif+Display:ital@1&display=swap" rel="stylesheet" />
+
+  <!-- Markdown renderer -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Mermaid diagram renderer (for Visual Learning mode) -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+
+  <!-- Our stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ════════════════════════════
+       SIDEBAR
+  ════════════════════════════ -->
+  <aside class="sidebar">
+
+    <div class="logo">
+      <div class="logo-icon">✦</div>
+      <div>
+        <div class="logo-text">LearnPilot</div>
+        <div class="logo-sub">AI Learning Assistant</div>
+      </div>
+    </div>
+
+    <!-- Learning Mode -->
+    <div>
+      <div class="section-label">Learning Mode</div>
+      <div class="mode-list">
+
+        <button class="mode-btn active"
+                data-mode="Concept-First Learning"
+                onclick="selectMode(this)">
+          <div class="mode-icon">📖</div>
+          <div class="mode-info">
+            <div class="mode-name">Concept First</div>
+            <div class="mode-desc">Build from the basics up</div>
+          </div>
+        </button>
+
+        <button class="mode-btn"
+                data-mode="Reverse Engineering"
+                onclick="selectMode(this)">
+          <div class="mode-icon">🔬</div>
+          <div class="mode-info">
+            <div class="mode-name">Reverse Engineer</div>
+            <div class="mode-desc">Start with the full solution</div>
+          </div>
+        </button>
+
+        <button class="mode-btn"
+                data-mode="Visual Learning"
+                onclick="selectMode(this)">
+          <div class="mode-icon">🗺️</div>
+          <div class="mode-info">
+            <div class="mode-name">Visual</div>
+            <div class="mode-desc">Diagrams and visual flow</div>
+          </div>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Session History -->
+    <div style="flex:1; overflow:hidden; display:flex; flex-direction:column;">
+      <div class="section-label">Recent</div>
+      <div class="history-list" id="history-list">
+        <div style="font-size:12px; color:var(--text3); padding: 8px 10px;">
+          No history yet
+        </div>
+      </div>
+    </div>
+
+    <!-- PDF Resources -->
+    <div>
+      <div class="section-label">Resources</div>
+      <div id="pdf-list" style="margin-bottom:8px;"></div>
+      <label style="display:flex; align-items:center; gap:8px; padding:8px 10px;
+                    background:var(--bg3); border:1px dashed var(--border2);
+                    border-radius:var(--radius-sm); cursor:pointer;
+                    font-size:12px; color:var(--text2);">
+        📎
+        <span id="upload-label">Upload PDF resource</span>
+        <input type="file" accept=".pdf" id="pdf-input"
+               style="display:none;" onchange="uploadPDF(this)" />
+      </label>
+      <div id="upload-status"
+           style="font-size:11px; color:var(--text3); margin-top:6px;"></div>
+    </div>
+
+  </aside>
+
+
+  <!-- ════════════════════════════
+       MAIN CONTENT
+  ════════════════════════════ -->
+  <main class="main">
+
+    <!-- Timer Bar (Idea 8) -->
+    <div class="timer-bar" id="timer-bar">
+      <span style="font-size:13px;">⏱️</span>
+      <span class="timer-label" id="timer-label">Study session</span>
+      <div class="timer-progress">
+        <div class="timer-fill" id="timer-fill" style="width:100%"></div>
+      </div>
+      <span class="timer-display" id="timer-display">25:00</span>
+      <button class="timer-btn" onclick="pauseTimer()" id="timer-pause-btn">Pause</button>
+      <button class="timer-btn" onclick="stopTimer()">Stop</button>
+    </div>
+
+    <!-- Toolbar: Compare + Timer start (Ideas 4, 5, 8) -->
+    <div class="main-toolbar">
+      <button class="compare-btn" id="compare-toggle-btn" onclick="toggleCompareView()">
+        ⇄ Compare Sessions
+      </button>
+      <div style="flex:1;"></div>
+      <button class="timer-btn" onclick="startTimer(25)" style="font-size:11px;">⏱ 25 min</button>
+      <button class="timer-btn" onclick="startTimer(50)" style="font-size:11px;">⏱ 50 min</button>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-area" id="input-area-block">
+      <div class="input-label">What do you want to learn?</div>
+      <div class="input-row">
+        <textarea
+          class="topic-input"
+          id="topic-input"
+          placeholder="Ask anything — 'Binary Search', 'why do we need pointers in C?', 'how does photosynthesis work'..."
+          rows="1"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="submit-btn" id="submit-btn" onclick="submit()">
+          <span>Generate</span>
+          <span>→</span>
+        </button>
+      </div>
+
+      <!-- Mode pill + PDF context row -->
+      <div style="display:flex; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap;">
+        <div class="active-mode-pill" id="mode-pill">
+          <span id="mode-pill-text">📖 Concept-First Learning</span>
+        </div>
+        <div id="pdf-context-row" style="display:none; align-items:center; gap:6px;">
+          <span style="font-size:11px; color:var(--text3);">📄</span>
+          <span id="active-pdf-name" style="font-size:11px; color:var(--green);"></span>
+          <input id="chapter-input" type="text"
+                 placeholder="e.g. chapter 3 (optional)"
+                 style="background:var(--bg3); border:1px solid var(--border);
+                        border-radius:6px; padding:3px 8px; font-size:11px;
+                        color:var(--text); outline:none; width:180px;" />
+          <button onclick="clearPdfContext()"
+                  style="background:none; border:none; color:var(--text3);
+                         cursor:pointer; font-size:11px;">✕</button>
+        </div>
+      </div>
+
+      <!-- Teaching Format Selector (Idea 7) -->
+      <div style="margin-top:10px;">
+        <div style="font-size:10px; font-weight:600; letter-spacing:0.8px;
+                    text-transform:uppercase; color:var(--text3); margin-bottom:6px;">
+          Teaching format
+        </div>
+        <div class="format-selector">
+          <button class="format-btn active" data-fmt="text"   onclick="selectFormat(this)">📝 Text</button>
+          <button class="format-btn"        data-fmt="visual" onclick="selectFormat(this)">🖼️ Image <span class="format-badge">SOON</span></button>
+          <button class="format-btn"        data-fmt="video"  onclick="selectFormat(this)">🎬 Video <span class="format-badge">SOON</span></button>
+          <button class="format-btn"        data-fmt="3d"     onclick="selectFormat(this)">🧊 3D <span class="format-badge">SOON</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Response / Empty State -->
+    <div class="response-area" id="response-area">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">✦</div>
+        <div class="empty-title">Start learning anything</div>
+        <div class="empty-sub">
+          Type a topic or question above. LearnPilot will explain it using
+          real web sources and AI reasoning.
+        </div>
+        <div class="example-chips">
+          <span class="chip" onclick="tryExample('Binary Search')">Binary Search</span>
+          <span class="chip" onclick="tryExample('how does photosynthesis work')">Photosynthesis</span>
+          <span class="chip" onclick="tryExample('merge sort algorithm')">Merge Sort</span>
+          <span class="chip" onclick="tryExample('French Revolution causes')">French Revolution</span>
+          <span class="chip" onclick="tryExample('why do we need pointers in C?')">C Pointers</span>
+          <span class="chip" onclick="tryExample('quantum entanglement')">Quantum Entanglement</span>
+        </div>
+      </div>
+      <div id="response-container" style="display:none;"></div>
+    </div>
+
+    <!-- Compare View (Ideas 4 & 5) -->
+    <div class="compare-view" id="compare-view">
+
+      <div class="compare-pane" id="compare-pane-left">
+        <div class="compare-pane-header">
+          <div>
+            <div class="compare-pane-label">Session A</div>
+            <div class="compare-pane-topic" id="compare-topic-left">—</div>
+          </div>
+          <select class="compare-select" id="compare-select-left"
+                  onchange="loadComparePane('left', this.value)">
+            <option value="">Select session</option>
+          </select>
+        </div>
+        <div class="compare-pane-body" id="compare-body-left">
+          <div class="compare-empty">
+            <div class="compare-empty-icon">📄</div>
+            <div>Select a session from history to compare</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="compare-pane" id="compare-pane-right">
+        <div class="compare-pane-header">
+          <div>
+            <div class="compare-pane-label">Session B</div>
+            <div class="compare-pane-topic" id="compare-topic-right">—</div>
+          </div>
+          <select class="compare-select" id="compare-select-right"
+                  onchange="loadComparePane('right', this.value)">
+            <option value="">Select session</option>
+          </select>
+        </div>
+        <div class="compare-pane-body" id="compare-body-right">
+          <div class="compare-empty">
+            <div class="compare-empty-icon">📄</div>
+            <div>Select a session from history to compare</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+
+<!-- ════════════════════════════
+     MODALS & OVERLAYS
+════════════════════════════ -->
+
+<!-- Pre-Assessment Modal (Idea 2) -->
+<div class="precheck-overlay" id="precheck-overlay">
+  <div class="precheck-modal">
+    <div class="precheck-title">How much do you know?</div>
+    <div class="precheck-sub" id="precheck-sub">
+      Before we begin, let us know your starting point so we can tailor the explanation.
+    </div>
+    <div class="precheck-options">
+      <div class="precheck-opt" onclick="selectPrecheck(this, 'none')">
+        <div class="precheck-opt-icon">🌱</div>
+        <div>
+          <div class="precheck-opt-label">Complete beginner</div>
+          <div class="precheck-opt-desc">I've never heard of this topic before</div>
+        </div>
+      </div>
+      <div class="precheck-opt" onclick="selectPrecheck(this, 'some')">
+        <div class="precheck-opt-icon">📘</div>
+        <div>
+          <div class="precheck-opt-label">Some familiarity</div>
+          <div class="precheck-opt-desc">I've seen it but don't understand it well</div>
+        </div>
+      </div>
+      <div class="precheck-opt" onclick="selectPrecheck(this, 'solid')">
+        <div class="precheck-opt-icon">⚡</div>
+        <div>
+          <div class="precheck-opt-label">Know the basics</div>
+          <div class="precheck-opt-desc">I understand the fundamentals, want to go deeper</div>
+        </div>
+      </div>
+    </div>
+    <div class="precheck-actions">
+      <button class="precheck-skip" onclick="closePrecheck(true)">Skip</button>
+      <button class="precheck-go"   onclick="closePrecheck(false)">Start Learning →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Break Overlay (Idea 8) -->
+<div class="break-overlay" id="break-overlay">
+  <div class="break-emoji">☕</div>
+  <div class="break-title">Time for a break!</div>
+  <div class="break-sub">Great work — rest your mind for a few minutes.</div>
+  <div class="break-timer" id="break-timer-display">5:00</div>
+  <button class="break-skip" onclick="endBreak()">Skip break →</button>
+</div>
+
+
+<!-- Our JavaScript -->
+<script src="js/main.js"></script>
+
+</body>
+</html>
