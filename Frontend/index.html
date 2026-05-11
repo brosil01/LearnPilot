@@ -1,137 +1,1483 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LearnPilot — AI Learning Assistant</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LearnPilot</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&family=DM+Serif+Display:ital@1&display=swap" rel="stylesheet" />
+  :root {
+    --bg:        #0a0b14;
+    --bg2:       #0f1020;
+    --bg3:       #151830;
+    --border:    rgba(255,255,255,0.07);
+    --border2:   rgba(255,255,255,0.13);
+    --text:      #ede9fe;
+    --text2:     #8b8fa8;
+    --text3:     #4b4d6e;
+    --accent:    #7c3aed;
+    --accent2:   #6d28d9;
+    --green:     #34d399;
+    --amber:     #fbbf24;
+    --purple:    #a78bfa;
+    --radius:    12px;
+    --radius-sm: 8px;
+    --font:      'DM Sans', sans-serif;
+    --mono:      'DM Mono', monospace;
+    --serif:     'DM Serif Display', serif;
+  }
 
-  <!-- Markdown renderer -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.65;
+    min-height: 100vh;
+  }
 
-  <!-- Mermaid diagram renderer (for Visual Learning mode) -->
-  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  /* ── Layout ── */
+  .shell {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+  }
 
-  <!-- Our stylesheet -->
-  <link rel="stylesheet" href="css/style.css" />
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 20px;
+    gap: 32px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, #7c3aed, #059669);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+
+  /* ── Mode Selector ── */
+  .mode-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text2);
+    font-family: var(--font);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    width: 100%;
+  }
+
+  .mode-btn:hover {
+    background: var(--bg3);
+    color: var(--text);
+  }
+
+  .mode-btn.active {
+    background: rgba(124,58,237,0.13);
+    border-color: rgba(124,58,237,0.35);
+    color: var(--purple);
+  }
+
+  .mode-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .mode-btn.active .mode-icon { background: rgba(108,143,255,0.2); }
+  .mode-btn:not(.active) .mode-icon { background: var(--bg3); }
+
+  .mode-info { flex: 1; }
+  .mode-name { font-weight: 500; font-size: 13px; line-height: 1.2; }
+  .mode-desc { font-size: 11px; color: var(--text3); margin-top: 2px; line-height: 1.3; }
+  .mode-btn.active .mode-desc { color: rgba(108,143,255,0.7); }
+
+  /* ── History ── */
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .history-item {
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .history-item:hover { background: var(--bg3); }
+
+  .history-topic {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .history-mode {
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 1px;
+  }
+
+  /* ── Main Content ── */
+  .main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ── Input Area ── */
+  .input-area {
+    padding: 32px 40px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .input-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .topic-input {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.15s;
+    resize: none;
+    min-height: 52px;
+    max-height: 140px;
+    line-height: 1.5;
+  }
+
+  .topic-input::placeholder { color: var(--text3); }
+  .topic-input:focus { border-color: #7c3aed; }
+
+  .submit-btn {
+    background: linear-gradient(90deg, #7c3aed, #059669);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 12px 22px;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .submit-btn:hover { opacity: 0.88; }
+  .submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .active-mode-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(124,58,237,0.1);
+    border: 1px solid rgba(124,58,237,0.3);
+    color: var(--purple);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 10px;
+  }
+
+  /* ── Response Area ── */
+  .response-area {
+    flex: 1;
+    padding: 32px 40px;
+    overflow-y: auto;
+  }
+
+  /* ── Empty State ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 16px;
+    color: var(--text3);
+    text-align: center;
+  }
+
+  .empty-icon {
+    font-size: 48px;
+    opacity: 0.4;
+  }
+
+  .empty-title {
+    font-family: var(--serif);
+    font-size: 22px;
+    color: var(--text2);
+    font-style: italic;
+  }
+
+  .empty-sub {
+    font-size: 13px;
+    max-width: 340px;
+    line-height: 1.6;
+  }
+
+  .example-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .chip {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .chip:hover {
+    border-color: var(--purple);
+    color: var(--purple);
+  }
+
+  /* ── Loading ── */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 16px;
+  }
+
+  .loading-dots {
+    display: flex; gap: 6px;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #7c3aed;
+    animation: bounce 1.2s infinite;
+  }
+
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  .loading-text {
+    font-size: 13px;
+    color: var(--text3);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* ── Response Card ── */
+  .response-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    animation: fadeUp 0.35s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .response-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .response-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .response-topic {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text);
+  }
+
+  .mode-tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .tag-concept  { background: rgba(74,222,128,0.12); color: var(--green); }
+  .tag-reverse  { background: rgba(251,191,36,0.12); color: var(--amber); }
+  .tag-visual   { background: rgba(167,139,250,0.12); color: var(--purple); }
+
+  /* ── Steps Sidebar inside card ── */
+  .response-body {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+  }
+
+  .response-content {
+    padding: 28px;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .steps-panel {
+    padding: 20px 16px;
+    background: var(--bg3);
+  }
+
+  .steps-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  .step-item {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.4;
+  }
+
+  .step-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+
+  /* ── Real World box ── */
+  .realworld-box {
+    margin: 0 28px;
+    background: rgba(74,222,128,0.05);
+    border: 1px solid rgba(74,222,128,0.2);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+  }
+
+  .realworld-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 10px;
+  }
+
+  .realworld-box .md-body p { font-size: 13px; margin-bottom: 6px; }
+  .realworld-box .md-body li { font-size: 13px; margin-bottom: 4px; }
+  .realworld-box .md-body ol,
+  .realworld-box .md-body ul { margin: 4px 0 8px 18px; }
+
+  /* ── Exercise box ── */
+  .exercise-box {
+    margin: 16px 28px 28px;
+    background: rgba(108,143,255,0.06);
+    border: 1px solid rgba(108,143,255,0.2);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+  }
+
+  .exercise-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .exercise-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ── Markdown styles ── */
+  .md-body h2 {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-style: italic;
+    color: var(--text);
+    margin: 24px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .md-body h2:first-child { margin-top: 0; }
+
+  .md-body h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 16px 0 6px;
+  }
+
+  .md-body p {
+    font-size: 14px;
+    color: var(--text2);
+    margin-bottom: 12px;
+    line-height: 1.7;
+  }
+
+  .md-body ul, .md-body ol {
+    margin: 8px 0 12px 20px;
+  }
+
+  .md-body li {
+    font-size: 14px;
+    color: var(--text2);
+    margin-bottom: 4px;
+    line-height: 1.6;
+  }
+
+  .md-body strong { color: var(--text); font-weight: 600; }
+
+  .md-body code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: rgba(255,255,255,0.06);
+    padding: 2px 5px;
+    border-radius: 4px;
+    color: var(--purple);
+  }
+
+  .md-body pre {
+    background: #0a0c10;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    overflow-x: auto;
+    margin: 12px 0;
+  }
+
+  .md-body pre code {
+    background: none;
+    padding: 0;
+    font-size: 13px;
+    color: #c9d1d9;
+    line-height: 1.6;
+  }
+
+  .md-body blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 8px 16px;
+    margin: 12px 0;
+    background: rgba(108,143,255,0.05);
+    border-radius: 0 6px 6px 0;
+  }
+
+  .md-body blockquote p { margin: 0; color: var(--text2); }
+
+  /* ── Mermaid ── */
+  .mermaid-wrapper {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 16px;
+    margin: 16px 0;
+    overflow-x: auto;
+    text-align: center;
+  }
+
+  .mermaid {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  .mermaid svg {
+    max-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    font-family: 'DM Sans', sans-serif !important;
+  }
+  .mermaid svg .node foreignObject {
+    overflow: visible !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .mermaid svg .node foreignObject > div {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+  .mermaid svg .nodeLabel {
+    white-space: nowrap !important;
+    text-align: center !important;
+    padding: 4px 12px !important;
+    line-height: 1.4 !important;
+    font-size: 13px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .mermaid svg .nodeLabel p {
+    white-space: nowrap !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: center !important;
+  }
+  .mermaid svg .node rect {
+    rx: 6px !important;
+    ry: 6px !important;
+  }
+
+  /* ── Learning Plan ── */
+  .plan-bar {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .plan-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    flex-shrink: 0;
+  }
+  .plan-steps {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .plan-step {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .plan-step.active {
+    background: rgba(124,58,237,0.15);
+    border-color: var(--purple);
+    color: var(--purple);
+    font-weight: 500;
+  }
+  .plan-step.done {
+    background: rgba(74,222,128,0.1);
+    border-color: rgba(74,222,128,0.3);
+    color: var(--green);
+  }
+  .chunk-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    border-top: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .chunk-progress {
+    font-size: 12px;
+    color: var(--text3);
+  }
+  .chunk-progress strong { color: var(--text2); }
+  .next-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 8px 20px;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .next-btn:hover { background: var(--accent2); }
+  .next-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .prev-btn {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 16px;
+    font-family: var(--font);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .prev-btn:hover { background: var(--bg2); }
+  .prev-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .complete-badge {
+    background: rgba(74,222,128,0.1);
+    border: 1px solid rgba(74,222,128,0.3);
+    color: var(--green);
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  /* ── Error ── */
+  .error-box {
+    background: rgba(226,75,74,0.08);
+    border: 1px solid rgba(226,75,74,0.25);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    color: #f87171;
+    font-size: 13px;
+  }
+
+  /* ── Feature Action Buttons ── */
+  .action-bar {
+    display: flex;
+    gap: 8px;
+    padding: 16px 28px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text2);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .action-btn:hover { border-color: var(--purple); color: var(--purple); background: rgba(124,58,237,0.08); }
+  .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .action-btn.loading { opacity: 0.6; }
+  .action-btn .btn-icon { font-size: 14px; }
+
+  /* ── Feature Panels ── */
+  .feature-panel {
+    margin: 0 28px 20px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    animation: fadeUp 0.3s ease;
+  }
+  .feature-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .feature-panel-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .feature-panel-body { padding: 18px; background: var(--bg2); }
+
+  /* More Context */
+  .more-context-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    background: var(--bg3);
+  }
+  .more-context-item:last-child { margin-bottom: 0; }
+  .context-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  /* Quiz */
+  .quiz-question {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--bg3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+  .quiz-q-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  .quiz-options { display: flex; flex-direction: column; gap: 6px; }
+  .quiz-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.12s;
+    font-size: 13px;
+    color: var(--text2);
+    background: var(--bg2);
+  }
+  .quiz-option:hover { border-color: var(--accent); color: var(--text); }
+  .quiz-option.correct { border-color: var(--green); background: rgba(74,222,128,0.08); color: var(--green); }
+  .quiz-option.wrong   { border-color: #f87171; background: rgba(248,113,113,0.08); color: #f87171; }
+  .quiz-option.revealed { cursor: default; }
+  .quiz-explanation {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text3);
+    padding: 8px 12px;
+    background: rgba(108,143,255,0.06);
+    border-radius: 4px;
+    display: none;
+  }
+  .quiz-score {
+    text-align: center;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text2);
+    background: var(--bg3);
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+  }
+
+  /* Exercises */
+  .exercise-item {
+    margin-bottom: 16px;
+    padding: 16px;
+    background: var(--bg3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+  .exercise-q-text {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 500;
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+  .exercise-type {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(167,139,250,0.12);
+    color: var(--purple);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .exercise-hint {
+    font-size: 12px;
+    color: var(--text3);
+    font-style: italic;
+    margin-bottom: 10px;
+  }
+  .exercise-answer {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: rgba(74,222,128,0.06);
+    border: 1px solid rgba(74,222,128,0.2);
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--text2);
+    display: none;
+  }
+  .show-answer-btn {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .show-answer-btn:hover { color: var(--green); border-color: var(--green); }
+
+  /* Related Links */
+  .link-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    background: var(--bg3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    transition: border-color 0.15s;
+  }
+  .link-item:hover { border-color: var(--accent); }
+  .link-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+  .link-info { flex: 1; min-width: 0; }
+  .link-title { font-size: 13px; font-weight: 500; color: var(--accent); margin-bottom: 3px; }
+  .link-desc { font-size: 11px; color: var(--text3); line-height: 1.4; }
+  .link-source {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    background: var(--bg2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* Loading spinner in panels */
+  .panel-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    color: var(--text3);
+    font-size: 13px;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 4px; }
+
+  /* ══════════════════════════════════════════
+     NEW FEATURES — Ideas 2, 4/5, 7, 8, 9, 10
+  ══════════════════════════════════════════ */
+
+  /* ── Teaching Format Selector (Idea 7) ── */
+  .format-selector {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .format-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text3);
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .format-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .format-btn.active {
+    background: rgba(124,58,237,0.12);
+    border-color: rgba(124,58,237,0.45);
+    color: var(--purple);
+  }
+  .format-btn.disabled-format {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .format-badge {
+    font-size: 9px;
+    background: rgba(251,191,36,0.15);
+    color: var(--amber);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Pre-Assessment / Knowledge Check (Idea 2) ── */
+  .precheck-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+  }
+  .precheck-overlay.open { display: flex; }
+  .precheck-modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 480px;
+    width: 90%;
+    animation: fadeUp 0.25s ease;
+  }
+  .precheck-title {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-style: italic;
+    margin-bottom: 6px;
+  }
+  .precheck-sub {
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  .precheck-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .precheck-opt {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.14s;
+    background: var(--bg3);
+  }
+  .precheck-opt:hover { border-color: var(--accent); }
+  .precheck-opt.selected { border-color: var(--accent); background: rgba(108,143,255,0.1); }
+  .precheck-opt-icon { font-size: 20px; flex-shrink: 0; }
+  .precheck-opt-label { font-size: 13px; font-weight: 500; color: var(--text); }
+  .precheck-opt-desc  { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .precheck-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .precheck-skip {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 16px;
+    color: var(--text3);
+    font-family: var(--font);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.14s;
+  }
+  .precheck-skip:hover { color: var(--text); border-color: var(--border2); }
+  .precheck-go {
+    background: linear-gradient(135deg, #7c3aed, #059669);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 8px 20px;
+    color: #fff;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.14s;
+  }
+  .precheck-go:hover { opacity: 0.88; }
+
+  /* ── Timer / Break System (Idea 8) ── */
+  .timer-bar {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .timer-bar.active { display: flex; }
+  .timer-display {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    min-width: 52px;
+  }
+  .timer-display.warning { color: var(--amber); }
+  .timer-display.break-mode { color: var(--green); }
+  .timer-progress {
+    flex: 1;
+    height: 3px;
+    background: var(--bg3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .timer-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 1s linear, background 0.3s;
+  }
+  .timer-fill.warning { background: var(--amber); }
+  .timer-fill.break-mode { background: var(--green); }
+  .timer-label { font-size: 11px; color: var(--text3); }
+  .timer-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 3px 9px;
+    color: var(--text3);
+    font-size: 11px;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .timer-btn:hover { border-color: var(--border2); color: var(--text); }
+
+  /* Break overlay */
+  .break-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 600;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .break-overlay.open { display: flex; }
+  .break-emoji { font-size: 56px; animation: pulse 2s infinite; }
+  .break-title { font-family: var(--serif); font-size: 26px; font-style: italic; color: var(--text); }
+  .break-sub   { font-size: 14px; color: var(--text3); }
+  .break-timer { font-family: var(--mono); font-size: 36px; color: var(--green); font-weight: 500; }
+  .break-skip  {
+    margin-top: 8px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 20px;
+    color: var(--text3);
+    font-family: var(--font);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .break-skip:hover { color: var(--text); border-color: var(--border2); }
+
+  /* ── Exam / Final Assessment (Idea 9) ── */
+  .exam-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    margin: 0 28px 20px;
+    background: rgba(251,191,36,0.06);
+    border: 1px solid rgba(251,191,36,0.25);
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--amber);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .exam-trigger:hover { background: rgba(251,191,36,0.1); }
+  .exam-panel { margin: 0 28px 20px; border-radius: var(--radius); overflow: hidden; border: 1px solid rgba(251,191,36,0.2); animation: fadeUp 0.3s ease; }
+  .exam-header {
+    background: rgba(251,191,36,0.08);
+    border-bottom: 1px solid rgba(251,191,36,0.15);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .exam-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber); }
+  .exam-body { padding: 20px; background: var(--bg2); }
+  .exam-q {
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    background: var(--bg3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+  .exam-q-num { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--amber); margin-bottom: 6px; }
+  .exam-q-text { font-size: 14px; color: var(--text); font-weight: 500; line-height: 1.5; margin-bottom: 10px; }
+  .exam-input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    outline: none;
+    resize: vertical;
+    min-height: 60px;
+  }
+  .exam-input:focus { border-color: var(--amber); }
+  .exam-submit {
+    width: 100%;
+    padding: 10px;
+    background: var(--amber);
+    color: #1a1000;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    margin-top: 4px;
+  }
+  .exam-submit:hover { opacity: 0.88; }
+  .exam-result {
+    padding: 16px;
+    background: rgba(74,222,128,0.06);
+    border: 1px solid rgba(74,222,128,0.2);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.6;
+    display: none;
+    margin-top: 12px;
+  }
+  .exam-score-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg3);
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+  }
+  .exam-score-num { font-family: var(--mono); font-size: 24px; font-weight: 500; color: var(--green); }
+  .exam-score-label { font-size: 12px; color: var(--text3); }
+
+  /* ── Compare Sessions (Ideas 4 & 5) ── */
+  .compare-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text3);
+    font-size: 11px;
+    font-family: var(--font);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.14s;
+    white-space: nowrap;
+  }
+  .compare-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .compare-btn.active { background: rgba(124,58,237,0.12); border-color: var(--purple); color: var(--purple); }
+
+  .compare-view {
+    display: none;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .compare-view.open { display: grid; }
+  .compare-pane {
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    max-height: calc(100vh - 120px);
+  }
+  .compare-pane-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .compare-pane-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); }
+  .compare-pane-topic { font-size: 13px; font-weight: 500; color: var(--text); margin-top: 2px; }
+  .compare-pane-body { padding: 20px; flex: 1; }
+  .compare-select {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: var(--text2);
+    font-family: var(--font);
+    font-size: 11px;
+    cursor: pointer;
+    outline: none;
+  }
+  .compare-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    color: var(--text3);
+    font-size: 13px;
+    gap: 8px;
+    padding: 40px;
+    text-align: center;
+  }
+  .compare-empty-icon { font-size: 32px; opacity: 0.4; }
+
+  /* ── Export / Preview (Idea 10) ── */
+  .export-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 28px;
+    border-top: 1px solid var(--border);
+    background: var(--bg3);
+    flex-wrap: wrap;
+  }
+  .export-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); margin-right: 4px; }
+  .export-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 13px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.14s;
+    white-space: nowrap;
+  }
+  .export-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(108,143,255,0.07); }
+
+  /* ── Session Compare Bar in header ── */
+  .main-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 40px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+</style>
 </head>
 <body>
 
 <div class="shell">
 
-  <!-- ════════════════════════════
-       SIDEBAR
-  ════════════════════════════ -->
+  <!-- ── Sidebar ── -->
   <aside class="sidebar">
-
     <div class="logo">
       <div class="logo-icon">✦</div>
       <div>
-        <div class="logo-text">LearnPilot</div>
+        <div class="logo-text" style="font-family:'Syne',sans-serif;font-weight:700;">LearnPilot</div>
         <div class="logo-sub">AI Learning Assistant</div>
       </div>
     </div>
 
-    <!-- Learning Mode -->
+    <!-- Mode selector -->
     <div>
       <div class="section-label">Learning Mode</div>
       <div class="mode-list">
-
-        <button class="mode-btn active"
-                data-mode="Concept-First Learning"
-                onclick="selectMode(this)">
+        <button class="mode-btn active" data-mode="Concept-First Learning" onclick="selectMode(this)">
           <div class="mode-icon">📖</div>
           <div class="mode-info">
             <div class="mode-name">Concept First</div>
             <div class="mode-desc">Build from the basics up</div>
           </div>
         </button>
-
-        <button class="mode-btn"
-                data-mode="Reverse Engineering"
-                onclick="selectMode(this)">
+        <button class="mode-btn" data-mode="Reverse Engineering" onclick="selectMode(this)">
           <div class="mode-icon">🔬</div>
           <div class="mode-info">
             <div class="mode-name">Reverse Engineer</div>
             <div class="mode-desc">Start with the full solution</div>
           </div>
         </button>
-
-        <button class="mode-btn"
-                data-mode="Visual Learning"
-                onclick="selectMode(this)">
+        <button class="mode-btn" data-mode="Visual Learning" onclick="selectMode(this)">
           <div class="mode-icon">🗺️</div>
           <div class="mode-info">
             <div class="mode-name">Visual</div>
             <div class="mode-desc">Diagrams and visual flow</div>
           </div>
         </button>
-
       </div>
     </div>
 
-    <!-- Session History -->
+    <!-- History -->
     <div style="flex:1; overflow:hidden; display:flex; flex-direction:column;">
       <div class="section-label">Recent</div>
       <div class="history-list" id="history-list">
-        <div style="font-size:12px; color:var(--text3); padding: 8px 10px;">
-          No history yet
-        </div>
+        <div style="font-size:12px; color:var(--text3); padding: 8px 10px;">No history yet</div>
       </div>
     </div>
 
-    <!-- PDF Resources -->
+    <!-- PDF Upload -->
     <div>
       <div class="section-label">Resources</div>
       <div id="pdf-list" style="margin-bottom:8px;"></div>
-      <label style="display:flex; align-items:center; gap:8px; padding:8px 10px;
-                    background:var(--bg3); border:1px dashed var(--border2);
-                    border-radius:var(--radius-sm); cursor:pointer;
-                    font-size:12px; color:var(--text2);">
-        📎
+      <label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border:1px dashed var(--border2);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;color:var(--text2);">
+        <span style="font-size:16px;">📎</span>
         <span id="upload-label">Upload PDF resource</span>
-        <input type="file" accept=".pdf" id="pdf-input"
-               style="display:none;" onchange="uploadPDF(this)" />
+        <input type="file" accept=".pdf" id="pdf-input" style="display:none;" onchange="uploadPDF(this)" />
       </label>
-      <div id="upload-status"
-           style="font-size:11px; color:var(--text3); margin-top:6px;"></div>
+      <div id="upload-status" style="font-size:11px;color:var(--text3);margin-top:6px;"></div>
     </div>
 
+    <!-- Footer -->
+    <div style="font-size:11px; color:var(--text3); line-height:1.5;">
+      Powered by Qwen2.5 · Groq<br/>
+      RAG: Wikipedia · Stack Exchange · arXiv · PubMed
+    </div>
   </aside>
 
-
-  <!-- ════════════════════════════
-       MAIN CONTENT
-  ════════════════════════════ -->
+  <!-- ── Main ── -->
   <main class="main">
 
-    <!-- Timer Bar (Idea 8) -->
+    <!-- ── Timer Bar (Idea 8) ── -->
     <div class="timer-bar" id="timer-bar">
       <span style="font-size:13px;">⏱️</span>
       <span class="timer-label" id="timer-label">Study session</span>
-      <div class="timer-progress">
-        <div class="timer-fill" id="timer-fill" style="width:100%"></div>
-      </div>
+      <div class="timer-progress"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
       <span class="timer-display" id="timer-display">25:00</span>
       <button class="timer-btn" onclick="pauseTimer()" id="timer-pause-btn">Pause</button>
       <button class="timer-btn" onclick="stopTimer()">Stop</button>
     </div>
 
-    <!-- Toolbar: Compare + Timer start (Ideas 4, 5, 8) -->
+    <!-- ── Toolbar: Compare + Timer Start (Ideas 4, 5, 8) ── -->
     <div class="main-toolbar">
-      <button class="compare-btn" id="compare-toggle-btn" onclick="toggleCompareView()">
-        ⇄ Compare Sessions
-      </button>
+      <button class="compare-btn" id="compare-toggle-btn" onclick="toggleCompareView()">⇄ Compare Sessions</button>
       <div style="flex:1;"></div>
       <button class="timer-btn" onclick="startTimer(25)" style="font-size:11px;">⏱ 25 min</button>
       <button class="timer-btn" onclick="startTimer(50)" style="font-size:11px;">⏱ 50 min</button>
     </div>
 
-    <!-- Input Area -->
+    <!-- Input -->
     <div class="input-area" id="input-area-block">
       <div class="input-label">What do you want to learn?</div>
       <div class="input-row">
@@ -148,50 +1494,40 @@
           <span>→</span>
         </button>
       </div>
-
-      <!-- Mode pill + PDF context row -->
-      <div style="display:flex; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;">
         <div class="active-mode-pill" id="mode-pill">
           <span id="mode-pill-text">📖 Concept-First Learning</span>
         </div>
-        <div id="pdf-context-row" style="display:none; align-items:center; gap:6px;">
-          <span style="font-size:11px; color:var(--text3);">📄</span>
-          <span id="active-pdf-name" style="font-size:11px; color:var(--green);"></span>
-          <input id="chapter-input" type="text"
-                 placeholder="e.g. chapter 3 (optional)"
-                 style="background:var(--bg3); border:1px solid var(--border);
-                        border-radius:6px; padding:3px 8px; font-size:11px;
-                        color:var(--text); outline:none; width:180px;" />
-          <button onclick="clearPdfContext()"
-                  style="background:none; border:none; color:var(--text3);
-                         cursor:pointer; font-size:11px;">✕</button>
+        <div id="pdf-context-row" style="display:none;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:var(--text3);">📄</span>
+          <span id="active-pdf-name" style="font-size:11px;color:var(--green);"></span>
+          <input
+            id="chapter-input"
+            type="text"
+            placeholder="e.g. chapter 3 (optional)"
+            style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--text);outline:none;width:180px;"
+          />
+          <button onclick="clearPdfContext()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;">✕</button>
         </div>
       </div>
-
       <!-- Teaching Format Selector (Idea 7) -->
       <div style="margin-top:10px;">
-        <div style="font-size:10px; font-weight:600; letter-spacing:0.8px;
-                    text-transform:uppercase; color:var(--text3); margin-bottom:6px;">
-          Teaching format
-        </div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;">Teaching format</div>
         <div class="format-selector">
-          <button class="format-btn active" data-fmt="text"   onclick="selectFormat(this)">📝 Text</button>
-          <button class="format-btn"        data-fmt="visual" onclick="selectFormat(this)">🖼️ Image <span class="format-badge">SOON</span></button>
-          <button class="format-btn"        data-fmt="video"  onclick="selectFormat(this)">🎬 Video <span class="format-badge">SOON</span></button>
-          <button class="format-btn"        data-fmt="3d"     onclick="selectFormat(this)">🧊 3D <span class="format-badge">SOON</span></button>
+          <button class="format-btn active" data-fmt="text" onclick="selectFormat(this)">📝 Text</button>
+          <button class="format-btn" data-fmt="visual" onclick="selectFormat(this)">🖼️ Image <span class="format-badge">SOON</span></button>
+          <button class="format-btn" data-fmt="video" onclick="selectFormat(this)">🎬 Video <span class="format-badge">SOON</span></button>
+          <button class="format-btn" data-fmt="3d" onclick="selectFormat(this)">🧊 3D <span class="format-badge">SOON</span></button>
         </div>
       </div>
     </div>
 
-    <!-- Response / Empty State -->
+    <!-- Response -->
     <div class="response-area" id="response-area">
       <div class="empty-state" id="empty-state">
         <div class="empty-icon">✦</div>
         <div class="empty-title">Start learning anything</div>
-        <div class="empty-sub">
-          Type a topic or question above. LearnPilot will explain it using
-          real web sources and AI reasoning.
-        </div>
+        <div class="empty-sub">Type a topic or question above. LearnPilot will explain it using real web sources and AI reasoning.</div>
         <div class="example-chips">
           <span class="chip" onclick="tryExample('Binary Search')">Binary Search</span>
           <span class="chip" onclick="tryExample('how does photosynthesis work')">Photosynthesis</span>
@@ -204,17 +1540,15 @@
       <div id="response-container" style="display:none;"></div>
     </div>
 
-    <!-- Compare View (Ideas 4 & 5) -->
+    <!-- ── Compare View (Ideas 4 & 5) ── -->
     <div class="compare-view" id="compare-view">
-
       <div class="compare-pane" id="compare-pane-left">
         <div class="compare-pane-header">
           <div>
             <div class="compare-pane-label">Session A</div>
             <div class="compare-pane-topic" id="compare-topic-left">—</div>
           </div>
-          <select class="compare-select" id="compare-select-left"
-                  onchange="loadComparePane('left', this.value)">
+          <select class="compare-select" id="compare-select-left" onchange="loadComparePane('left',this.value)">
             <option value="">Select session</option>
           </select>
         </div>
@@ -225,15 +1559,13 @@
           </div>
         </div>
       </div>
-
       <div class="compare-pane" id="compare-pane-right">
         <div class="compare-pane-header">
           <div>
             <div class="compare-pane-label">Session B</div>
             <div class="compare-pane-topic" id="compare-topic-right">—</div>
           </div>
-          <select class="compare-select" id="compare-select-right"
-                  onchange="loadComparePane('right', this.value)">
+          <select class="compare-select" id="compare-select-right" onchange="loadComparePane('right',this.value)">
             <option value="">Select session</option>
           </select>
         </div>
@@ -244,40 +1576,32 @@
           </div>
         </div>
       </div>
-
     </div>
 
   </main>
 </div>
 
-
-<!-- ════════════════════════════
-     MODALS & OVERLAYS
-════════════════════════════ -->
-
-<!-- Pre-Assessment Modal (Idea 2) -->
+<!-- ── Pre-Assessment Modal (Idea 2) ── -->
 <div class="precheck-overlay" id="precheck-overlay">
   <div class="precheck-modal">
     <div class="precheck-title">How much do you know?</div>
-    <div class="precheck-sub" id="precheck-sub">
-      Before we begin, let us know your starting point so we can tailor the explanation.
-    </div>
+    <div class="precheck-sub" id="precheck-sub">Before we begin, let us know your starting point so we can tailor the explanation.</div>
     <div class="precheck-options">
-      <div class="precheck-opt" onclick="selectPrecheck(this, 'none')">
+      <div class="precheck-opt" onclick="selectPrecheck(this,'none')">
         <div class="precheck-opt-icon">🌱</div>
         <div>
           <div class="precheck-opt-label">Complete beginner</div>
           <div class="precheck-opt-desc">I've never heard of this topic before</div>
         </div>
       </div>
-      <div class="precheck-opt" onclick="selectPrecheck(this, 'some')">
+      <div class="precheck-opt" onclick="selectPrecheck(this,'some')">
         <div class="precheck-opt-icon">📘</div>
         <div>
           <div class="precheck-opt-label">Some familiarity</div>
           <div class="precheck-opt-desc">I've seen it but don't understand it well</div>
         </div>
       </div>
-      <div class="precheck-opt" onclick="selectPrecheck(this, 'solid')">
+      <div class="precheck-opt" onclick="selectPrecheck(this,'solid')">
         <div class="precheck-opt-icon">⚡</div>
         <div>
           <div class="precheck-opt-label">Know the basics</div>
@@ -287,12 +1611,12 @@
     </div>
     <div class="precheck-actions">
       <button class="precheck-skip" onclick="closePrecheck(true)">Skip</button>
-      <button class="precheck-go"   onclick="closePrecheck(false)">Start Learning →</button>
+      <button class="precheck-go" onclick="closePrecheck(false)" id="precheck-go-btn">Start Learning →</button>
     </div>
   </div>
 </div>
 
-<!-- Break Overlay (Idea 8) -->
+<!-- ── Break Overlay (Idea 8) ── -->
 <div class="break-overlay" id="break-overlay">
   <div class="break-emoji">☕</div>
   <div class="break-title">Time for a break!</div>
@@ -301,9 +1625,1222 @@
   <button class="break-skip" onclick="endBreak()">Skip break →</button>
 </div>
 
+<script>
+const API = 'http://127.0.0.1:8000'
+let currentMode   = 'Concept-First Learning'
+let history       = []
+let activePdfId   = null
+let activePdfName = ''
 
-<!-- Our JavaScript -->
-<script src="js/main.js"></script>
+// Session context for feature buttons
+let currentSessionTopic    = ''
+let currentSessionMode     = ''
+let currentSessionContexts = []
+let currentSessionRawData  = null
+
+// Chunked learning state
+let learningPlan    = []
+let currentChunk    = 0
+let currentTopic    = ''
+let chunkResponses  = {}
+
+// New feature state
+let currentFormat    = 'text'          // Idea 7 — teaching format
+let precheckLevel    = null            // Idea 2 — knowledge level
+let pendingTopic     = null            // held while precheck modal open
+let timerInterval    = null            // Idea 8 — study timer
+let timerTotal       = 0
+let timerRemaining   = 0
+let timerPaused      = false
+let breakInterval    = null
+let breakRemaining   = 0
+let compareMode      = false           // Ideas 4/5 — compare view
+let compareHistory   = {}             // {index: responseData}
+
+loadPdfList()
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  suppressErrorRendering: true,
+  flowchart: {
+    useMaxWidth: true,
+    htmlLabels: true,
+    curve: 'basis',
+    nodeSpacing: 50,
+    rankSpacing: 70,
+  },
+  themeVariables: {
+    background: '#1a1e26',
+    primaryColor: '#253050',
+    primaryBorderColor: '#4a5a8a',
+    primaryTextColor: '#e8eaf0',
+    secondaryColor: '#1a2035',
+    tertiaryColor: '#1a1e26',
+    lineColor: '#7c3aed',
+    edgeLabelBackground: '#1a1e26',
+    fontSize: '14px',
+    fontFamily: 'DM Sans, sans-serif',
+    nodeBorder: '#4a5a8a',
+    clusterBkg: '#1a2035',
+    titleColor: '#e8eaf0',
+    nodeTextColor: '#e8eaf0',
+  }
+})
+
+function selectMode(btn) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  currentMode = btn.dataset.mode
+  const icons = { 'Concept-First Learning':'📖', 'Reverse Engineering':'🔬', 'Visual Learning':'🗺️' }
+  document.getElementById('mode-pill-text').textContent = `${icons[currentMode]} ${currentMode}`
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto'
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px'
+}
+
+function tryExample(topic) {
+  document.getElementById('topic-input').value = topic
+  submit()
+}
+
+async function submit() {
+  const input = document.getElementById('topic-input')
+  const topic = input.value.trim()
+  if (!topic) return
+
+  // Idea 2 — show pre-assessment if first time for this topic
+  if (precheckLevel === null) {
+    pendingTopic = topic
+    document.getElementById('precheck-sub').textContent =
+      `Before diving into "${topic}", let us know your starting point.`
+    document.getElementById('precheck-overlay').classList.add('open')
+    return
+  }
+
+  const btn = document.getElementById('submit-btn')
+  btn.disabled = true
+  btn.innerHTML = '<span>Generating...</span>'
+
+  document.getElementById('empty-state').style.display = 'none'
+  const container = document.getElementById('response-container')
+  container.style.display = 'block'
+
+  container.innerHTML = `
+    <div class="loading">
+      <div class="loading-dots">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+      <div class="loading-text">Searching sources & generating explanation...</div>
+    </div>`
+
+  try {
+    // Detect chapter reference from input or topic text
+    const chapterEl  = document.getElementById('chapter-input')
+    const chapterRef = (chapterEl && chapterEl.value ? chapterEl.value.trim() : '') ||
+                       ((topic.match(/chapter\s*\d+/i) || [])[0] || '')
+
+    // If PDF active + chapter detected → use chunked learning
+    if (activePdfId && chapterRef && /chapter\s*\d+/i.test(chapterRef)) {
+      currentTopic = topic
+      input.value  = ''
+      input.style.height = 'auto'
+      btn.disabled = false
+      btn.innerHTML = '<span>Generate</span><span>→</span>'
+      await startChunkedLearning(topic, chapterRef)
+      return
+    }
+
+    // Normal generate (no PDF or no chapter ref)
+    const res = await fetch(`${API}/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topic,
+        mode: currentMode,
+        code_snippet: null,
+        pdf_id: activePdfId || null,
+        chapter_ref: chapterRef || null,
+      })
+    })
+
+    if (!res.ok) throw new Error(`Server error: ${res.status}`)
+    const data = await res.json()
+
+    renderResponse(topic, data)
+    addToHistory(topic, currentMode)
+    input.value = ''
+    input.style.height = 'auto'
+
+  } catch (err) {
+    container.innerHTML = `
+      <div class="error-box">
+        The backend server is not connected. Please try again later.
+      </div>`
+  }
+
+  btn.disabled = false
+  btn.innerHTML = '<span>Generate</span><span>→</span>'
+}
+
+function renderResponse(topic, data) {
+  const container = document.getElementById('response-container')
+
+  const modeColors = {
+    'Concept-First Learning': 'tag-concept',
+    'Reverse Engineering':    'tag-reverse',
+    'Visual Learning':        'tag-visual'
+  }
+
+  const stepsHtml = (data.steps || []).map(s => `
+    <div class="step-item">
+      <div class="step-dot"></div>
+      <div>${renderInlineMd(s)}</div>
+    </div>`).join('')
+
+  // Strip leaked system prompt content and Real World section from raw markdown
+  const rawCleaned = (data.raw || data.explanation || '')
+    .replace(/## Real World Applications[\s\S]*?(?=## |$)/g, '')
+    .replace(/Give a concrete, relevant example that matches the subject:[\s\S]*?Match the example to the subject\.?\n*/g, '')
+    .replace(/Biology\/Nature topic[^\n]*\n/g, '')
+    .replace(/History\/Social topic[^\n]*\n/g, '')
+    .replace(/Math\/Physics topic[^\n]*\n/g, '')
+    .replace(/Programming\/CS topic[^\n]*\n/g, '')
+    .replace(/Language\/Arts topic[^\n]*\n/g, '')
+    .replace(/One clear question that tests genuine understanding[^\n]*\n/g, '')
+    .replace(/Format exactly as:[^\n]*\n/g, '')
+    .replace(/Show exactly where this concept[^\n]*\n/g, '')
+    .replace(/Give 3-5 specific[^\n]*\n/g, '')
+    .replace(/Explain the core idea[^\n]*\n/g, '')
+    .replace(/Go deeper\. Explain[^\n]*\n/g, '')
+    .replace(/Introduce one more advanced[^\n]*\n/g, '')
+    .replace(/Give ONE concrete example[^\n]*\n/g, '')
+    .replace(/\[Write the[^\]]*\]\n*/g, '')
+    .replace(/\[Write [^\]]*\]\n*/g, '')
+    .trim()
+  const rawHtml = renderMarkdown(rawCleaned)
+
+  const realWorldHtml = data.real_world
+    ? `<div class="realworld-box">
+        <div class="realworld-label">🌍 Real World Applications</div>
+        <div class="md-body">${renderMarkdown(data.real_world)}</div>
+       </div>`
+    : ''
+
+  // Store session context for features
+  currentSessionTopic    = topic
+  currentSessionMode     = data.mode
+  currentSessionContexts = [data.raw || '']
+  currentSessionRawData  = data
+
+  container.innerHTML = `
+    <div class="response-card" id="main-response-card">
+      <div class="response-header">
+        <div class="response-meta">
+          <div class="response-topic">${escHtml(topic)}</div>
+          <span class="mode-tag ${modeColors[data.mode] || 'tag-concept'}">${data.mode}</span>
+        </div>
+      </div>
+      <div class="response-body">
+        <div class="response-content">
+          <div class="md-body" id="md-output">${rawHtml}</div>
+        </div>
+        <div class="steps-panel">
+          <div class="steps-title">Summary</div>
+          ${stepsHtml}
+        </div>
+      </div>
+      ${realWorldHtml}
+      ${data.exercise ? `<div class="exercise-box">
+        <div class="exercise-label">Practice</div>
+        <div class="exercise-text">${escHtml(data.exercise)}</div>
+      </div>` : ''}
+      <div class="action-bar">
+        <button class="action-btn" onclick="doMoreContext(this)">
+          <span class="btn-icon">➕</span> More Context
+        </button>
+        <button class="action-btn" onclick="doQuiz(this)">
+          <span class="btn-icon">🧠</span> Quizlet
+        </button>
+        <button class="action-btn" onclick="doExercises(this)">
+          <span class="btn-icon">✏️</span> Exercise Questions
+        </button>
+        <button class="action-btn" onclick="doRelatedLinks(this)">
+          <span class="btn-icon">🔗</span> Related Links
+        </button>
+      </div>
+      <div class="exam-trigger" onclick="doExam(this)">
+        🎓 <strong>Final Assessment</strong> — Test everything you've learned in this session
+      </div>
+      <div id="features-container"></div>
+      <div class="export-bar">
+        <span class="export-label">Export</span>
+        <button class="export-btn" onclick="exportMarkdown()">📄 Markdown</button>
+        <button class="export-btn" onclick="exportPDF()">🖨️ Print / PDF</button>
+        <button class="export-btn" onclick="copyToClipboard()">📋 Copy text</button>
+      </div>
+    </div>`
+
+  renderMermaidBlocks()
+}
+
+function renderMarkdown(raw) {
+  if (!raw) return ''
+  const parts = raw.split(/(```mermaid[\s\S]*?```)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith('```mermaid')) {
+      const code = part.replace(/^```mermaid\n?/, '').replace(/```$/, '').trim()
+      const id = `mermaid-${Date.now()}-${i}`
+      return `<div class="mermaid-wrapper"><div class="mermaid" id="${id}">${escHtml(code)}</div></div>`
+    }
+    return marked.parse(part)
+  }).join('')
+}
+
+function renderInlineMd(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+function cleanMermaidCode(raw) {
+  let code = raw
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"')
+    .replace(/-->\|([^|]*)\|>/g, '-->|$1|')
+    .replace(/---\|([^|]*)\|>/g, '---|$1|')
+    .trim()
+  // If the model put everything on one line, split at node transitions
+  if (!code.includes('\n')) {
+    code = code
+      .replace(/(\s+)(graph |flowchart |sequenceDiagram|classDiagram|stateDiagram|timeline|mindmap|gantt|pie)/g, '\n$2')
+      .replace(/\s+(A\[|B\[|C\[|D\[|E\[|F\[|G\[|H\[)/g, '\n    $1')
+      .replace(/([A-Z]\])\s+-->/g, '$1\n    -->')
+      .replace(/-->\s+([A-Z]\[)/g, '-->\n    $1')
+  }
+  return code
+}
+
+function makeFallbackDiagram(rawCode) {
+  // Parse node labels from mermaid code and render as a pretty HTML flow diagram
+  const nodePattern = /[A-Za-z0-9]+\[([^\]]+)\]/g
+  const nodes = []
+  let m
+  while ((m = nodePattern.exec(rawCode)) !== null) {
+    if (!nodes.includes(m[1])) nodes.push(m[1])
+  }
+  if (nodes.length < 2) {
+    return '<pre style="font-size:12px;color:var(--text3);padding:12px;overflow-x:auto;white-space:pre-wrap;">' + rawCode.replace(/</g,'&lt;') + '</pre>'
+  }
+  const items = nodes.slice(0,8).map((label, i) => `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <div style="background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:500;color:#a78bfa;text-align:center;max-width:120px;line-height:1.3;">${label}</div>
+      ${i < nodes.slice(0,8).length - 1 ? '<div style="font-size:16px;color:var(--text3);">↓</div>' : ''}
+    </div>`).join('')
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:0;padding:8px 0;">${items}</div>`
+}
+
+async function renderMermaidBlocks() {
+  await new Promise(r => setTimeout(r, 120))
+  const blocks = document.querySelectorAll('.mermaid:not([data-processed])')
+  for (const block of blocks) {
+    block.setAttribute('data-processed', 'true')
+    const rawCode = cleanMermaidCode(block.textContent)
+    const uid = 'mg' + Date.now() + Math.random().toString(36).slice(2,6)
+    const wrapper = block.closest('.mermaid-wrapper')
+    try {
+      const { svg } = await mermaid.render(uid, rawCode)
+      block.innerHTML = svg
+      // Keep SVG at natural rendered size — just cap at container width
+      const svgEl = block.querySelector('svg')
+      if (svgEl) {
+        svgEl.removeAttribute('width')
+        svgEl.removeAttribute('height')
+        svgEl.style.maxWidth = '100%'
+        svgEl.style.height = 'auto'
+        svgEl.style.overflow = 'visible'
+      }
+    } catch(e) {
+      if (wrapper) {
+        wrapper.innerHTML = makeFallbackDiagram(rawCode)
+      }
+    }
+  }
+}
+
+async function startChunkedLearning(topic, chapterRef) {
+  const container = document.getElementById('response-container')
+  document.getElementById('empty-state').style.display = 'none'
+  container.style.display = 'block'
+  container.innerHTML = `
+    <div class="loading">
+      <div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <div class="loading-text">Building your learning plan for ${chapterRef}...</div>
+    </div>`
+
+  try {
+    // Step 1: Get learning plan
+    const planRes = await fetch(`${API}/plan`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({pdf_id: activePdfId, chapter_ref: chapterRef})
+    })
+    if (!planRes.ok) throw new Error('Could not build learning plan')
+    const plan = await planRes.json()
+
+    if (!plan.subtopics || plan.subtopics.length === 0) {
+      throw new Error('No subtopics found in this chapter')
+    }
+
+    // Reset chunked state
+    learningPlan   = plan.subtopics
+    currentChunk   = 0
+    currentTopic   = topic
+    chunkResponses = {}
+
+    // Step 2: Teach first chunk
+    await teachChunk(0)
+
+  } catch(err) {
+    container.innerHTML = `<div class="error-box">The backend server is not connected. Please try again later.</div>`
+  }
+}
+
+async function teachChunk(index) {
+  if (index < 0 || index >= learningPlan.length) return
+
+  currentChunk = index
+  const chunk  = learningPlan[index]
+  const container = document.getElementById('response-container')
+
+  // Show from cache if available
+  if (chunkResponses[index]) {
+    renderChunkResponse(chunkResponses[index], index)
+    return
+  }
+
+  container.innerHTML = `
+    <div class="loading">
+      <div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <div class="loading-text">Teaching: ${chunk.title}...</div>
+    </div>`
+
+  try {
+    const res = await fetch(`${API}/generate-chunk`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        topic:        currentTopic,
+        mode:         currentMode,
+        pdf_id:       activePdfId,
+        page_start:   chunk.page_start,
+        page_end:     chunk.page_end,
+        chunk_title:  chunk.title,
+        chunk_index:  index,
+        total_chunks: learningPlan.length,
+      })
+    })
+    if (!res.ok) throw new Error(`Server error: ${res.status}`)
+    const data = await res.json()
+
+    // Cache the response
+    chunkResponses[index] = data
+    renderChunkResponse(data, index)
+    addToHistory(`${currentTopic} [${chunk.title}]`, currentMode)
+
+  } catch(err) {
+    container.innerHTML = `<div class="error-box">The backend server is not connected. Please try again later.</div>`
+  }
+}
+
+function renderChunkResponse(data, index) {
+  const container = document.getElementById('response-container')
+  const chunk     = learningPlan[index]
+  const total     = learningPlan.length
+
+  // Build plan progress bar
+  const planSteps = learningPlan.map((s, i) => {
+    const cls = i < index ? 'plan-step done' : i === index ? 'plan-step active' : 'plan-step'
+    const icon = i < index ? '✓ ' : ''
+    return `<span class="${cls}" onclick="teachChunk(${i})">${icon}${s.section}</span>`
+  }).join('')
+
+  const modeColors = {
+    'Concept-First Learning': 'tag-concept',
+    'Reverse Engineering':    'tag-reverse',
+    'Visual Learning':        'tag-visual'
+  }
+
+  const stepsHtml = (data.steps || []).map(s => `
+    <div class="step-item">
+      <div class="step-dot"></div>
+      <div>${renderInlineMd(s)}</div>
+    </div>`).join('')
+
+  const rawCleaned = (data.raw || data.explanation || '')
+    .replace(/## Real World Applications[\s\S]*?(?=## |$)/g, '')
+    .replace(/Give a concrete, relevant example that matches the subject:[\s\S]*?Match the example to the subject\.?\n*/g, '')
+    .replace(/Biology\/Nature topic[^\n]*\n/g, '')
+    .replace(/History\/Social topic[^\n]*\n/g, '')
+    .replace(/Math\/Physics topic[^\n]*\n/g, '')
+    .replace(/Programming\/CS topic[^\n]*\n/g, '')
+    .replace(/Language\/Arts topic[^\n]*\n/g, '')
+    .replace(/One clear question that tests genuine understanding[^\n]*\n/g, '')
+    .replace(/Format exactly as:[^\n]*\n/g, '')
+    .replace(/Show exactly where this concept[^\n]*\n/g, '')
+    .replace(/Give 3-5 specific[^\n]*\n/g, '')
+    .replace(/Explain the core idea[^\n]*\n/g, '')
+    .replace(/Go deeper\. Explain[^\n]*\n/g, '')
+    .replace(/Introduce one more advanced[^\n]*\n/g, '')
+    .replace(/Give ONE concrete example[^\n]*\n/g, '')
+    .replace(/\[Write the[^\]]*\]\n*/g, '')
+    .replace(/\[Write [^\]]*\]\n*/g, '')
+    .trim()
+  const rawHtml = renderMarkdown(rawCleaned)
+
+  const realWorldHtml = data.real_world
+    ? `<div class="realworld-box">
+        <div class="realworld-label">🌍 Real World Applications</div>
+        <div class="md-body">${renderMarkdown(data.real_world)}</div>
+       </div>` : ''
+
+  // Nav buttons
+  const prevDisabled = index === 0 ? 'disabled' : ''
+  const navHtml = index < total - 1
+    ? `<button class="prev-btn" onclick="teachChunk(${index-1})" ${prevDisabled}>← Previous</button>
+       <span class="chunk-progress">Part <strong>${index+1}</strong> of <strong>${total}</strong></span>
+       <button class="next-btn" onclick="teachChunk(${index+1})">Next → <small>${learningPlan[index+1]?.section || ''}</small></button>`
+    : `<button class="prev-btn" onclick="teachChunk(${index-1})" ${prevDisabled}>← Previous</button>
+       <span class="chunk-progress">Part <strong>${index+1}</strong> of <strong>${total}</strong></span>
+       <span class="complete-badge">✓ Chapter Complete!</span>`
+
+  container.innerHTML = `
+    <div class="plan-bar">
+      <span class="plan-title">Learning Plan</span>
+      <div class="plan-steps">${planSteps}</div>
+    </div>
+    <div class="response-card">
+      <div class="response-header">
+        <div class="response-meta">
+          <div class="response-topic">${escHtml(chunk.title)}</div>
+          <span class="mode-tag ${modeColors[data.mode] || 'tag-concept'}">${data.mode}</span>
+        </div>
+      </div>
+      <div class="response-body">
+        <div class="response-content">
+          <div class="md-body">${rawHtml}</div>
+        </div>
+        <div class="steps-panel">
+          <div class="steps-title">Summary</div>
+          ${stepsHtml}
+        </div>
+      </div>
+      ${realWorldHtml}
+      ${data.exercise ? `<div class="exercise-box">
+        <div class="exercise-label">Practice</div>
+        <div class="exercise-text">${escHtml(data.exercise)}</div>
+      </div>` : ''}
+      <div class="chunk-nav">${navHtml}</div>
+    </div>`
+
+  renderMermaidBlocks()
+}
+
+// ── Feature Button Functions ──────────────────────────────────────────────────
+
+function getFeatureContainer() {
+  return document.getElementById('features-container')
+}
+
+function setActionBtnLoading(btn, loading, label) {
+  btn.disabled = loading
+  if (loading) {
+    btn.classList.add('loading')
+    btn.innerHTML = `<span class="btn-icon">⏳</span> Loading...`
+  } else {
+    btn.classList.remove('loading')
+    btn.innerHTML = label
+  }
+}
+
+// ── More Context ──────────────────────────────────────────────────────────────
+async function doMoreContext(btn) {
+  setActionBtnLoading(btn, true, '')
+  const fc = getFeatureContainer()
+
+  // Show loading in panel
+  const panelId = 'more-ctx-' + Date.now()
+  const loadDiv = document.createElement('div')
+  loadDiv.className = 'feature-panel'
+  loadDiv.id = panelId
+  loadDiv.innerHTML = `
+    <div class="feature-panel-header">
+      <div class="feature-panel-title">➕ Additional Context</div>
+    </div>
+    <div class="feature-panel-body">
+      <div class="panel-loading">
+        <div class="dot"></div><div class="dot" style="animation-delay:0.2s"></div><div class="dot" style="animation-delay:0.4s"></div>
+        <span>Generating additional context...</span>
+      </div>
+    </div>`
+  fc.appendChild(loadDiv)
+
+  try {
+    const res = await fetch(`${API}/more-context`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        topic:           currentSessionTopic,
+        mode:            currentSessionMode,
+        already_covered: currentSessionContexts,
+        rag_context:     '',
+      })
+    })
+    const data = await res.json()
+
+    // Add to accumulated contexts
+    if (data.raw) currentSessionContexts.push(data.raw)
+
+    const panel = document.getElementById(panelId)
+    const cleanRaw = (data.raw || '').replace(/## Real World Applications[\s\S]*?(?=## |$)/g,'').trim()
+    const realW = data.real_world ? `
+      <div class="realworld-box" style="margin-top:12px;">
+        <div class="realworld-label">🌍 Real World Applications</div>
+        <div class="md-body">${renderMarkdown(data.real_world)}</div>
+      </div>` : ''
+
+    panel.innerHTML = `
+      <div class="feature-panel-header">
+        <div class="feature-panel-title">➕ Additional Context — ${escHtml(data.title || 'More Detail')}</div>
+      </div>
+      <div class="feature-panel-body">
+        <div class="md-body">${renderMarkdown(cleanRaw)}</div>
+        ${realW}
+      </div>`
+
+    renderMermaidBlocks()
+  } catch(e) {
+    document.getElementById(panelId).innerHTML = `<div class="error-box">The backend server is not connected. Please try again later.</div>`
+  }
+
+  setActionBtnLoading(btn, false, '<span class="btn-icon">➕</span> More Context')
+}
+
+// ── Quiz ──────────────────────────────────────────────────────────────────────
+async function doQuiz(btn) {
+  setActionBtnLoading(btn, true, '')
+  const fc = getFeatureContainer()
+  const panelId = 'quiz-' + Date.now()
+
+  const loadDiv = document.createElement('div')
+  loadDiv.className = 'feature-panel'
+  loadDiv.id = panelId
+  loadDiv.innerHTML = `
+    <div class="feature-panel-header">
+      <div class="feature-panel-title">🧠 Quizlet</div>
+    </div>
+    <div class="feature-panel-body">
+      <div class="panel-loading">
+        <div class="dot"></div><div class="dot" style="animation-delay:0.2s"></div><div class="dot" style="animation-delay:0.4s"></div>
+        <span>Generating quiz questions based on ${currentSessionContexts.length} context(s)...</span>
+      </div>
+    </div>`
+  fc.appendChild(loadDiv)
+
+  try {
+    const res = await fetch(`${API}/quiz`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        topic:        currentSessionTopic,
+        all_contexts: currentSessionContexts,
+        num_questions: 5,
+      })
+    })
+    const data = await res.json()
+
+    let score = 0
+    let answered = 0
+    const total = (data.questions || []).length
+
+    const questionsHtml = (data.questions || []).map((q, qi) => {
+      const opts = (q.options || []).map((opt, oi) => {
+        const letter = opt.charAt(0)
+        return `<div class="quiz-option" onclick="answerQuiz(this, '${letter}', '${q.correct}', 'quiz-exp-${panelId}-${qi}', 'quiz-score-${panelId}')" data-letter="${letter}">
+          ${escHtml(opt)}
+        </div>`
+      }).join('')
+
+      return `<div class="quiz-question">
+        <div class="quiz-q-text">${qi+1}. ${escHtml(q.question)}</div>
+        <div class="quiz-options" id="quiz-opts-${panelId}-${qi}">${opts}</div>
+        <div class="quiz-explanation" id="quiz-exp-${panelId}-${qi}">${escHtml(q.explanation || '')}</div>
+      </div>`
+    }).join('')
+
+    document.getElementById(panelId).innerHTML = `
+      <div class="feature-panel-header">
+        <div class="feature-panel-title">🧠 Quizlet — ${total} Questions</div>
+        <span style="font-size:12px;color:var(--text3)">Based on ${currentSessionContexts.length} context(s)</span>
+      </div>
+      <div class="feature-panel-body">
+        <div class="quiz-score" id="quiz-score-${panelId}">Answer the questions to see your score</div>
+        ${questionsHtml || '<div style="color:var(--text3)">No questions generated. Try adding more context first.</div>'}
+      </div>`
+
+    window['quizState_' + panelId] = { score: 0, answered: 0, total }
+
+  } catch(e) {
+    document.getElementById(panelId).innerHTML = `<div class="error-box">The backend server is not connected. Please try again later.</div>`
+  }
+
+  setActionBtnLoading(btn, false, '<span class="btn-icon">🧠</span> Quizlet')
+}
+
+function answerQuiz(optEl, chosen, correct, expId, scoreId) {
+  const optsContainer = optEl.parentElement
+  if (optsContainer.dataset.answered) return  // already answered
+
+  optsContainer.dataset.answered = '1'
+  Array.from(optsContainer.children).forEach(o => {
+    o.classList.add('revealed')
+    if (o.dataset.letter === correct) o.classList.add('correct')
+    else if (o.dataset.letter === chosen && chosen !== correct) o.classList.add('wrong')
+  })
+
+  // Show explanation
+  const exp = document.getElementById(expId)
+  if (exp) exp.style.display = 'block'
+
+  // Update score
+  const scoreEl = document.getElementById(scoreId)
+  if (scoreEl) {
+    // Count answered questions
+    const card = scoreEl.closest('.feature-panel-body')
+    const allOpts = card.querySelectorAll('.quiz-options[data-answered]')
+    const correct_count = card.querySelectorAll('.quiz-option.correct.revealed').length - card.querySelectorAll('.quiz-option.correct.wrong').length
+    // Simpler: count green ones the user selected
+    const userCorrect = card.querySelectorAll('.quiz-option.correct:not(.wrong)').length
+    const totalQ = card.querySelectorAll('.quiz-question').length
+    const answeredQ = allOpts.length
+    scoreEl.textContent = `${answeredQ} of ${totalQ} answered`
+  }
+}
+
+// ── Exercises ─────────────────────────────────────────────────────────────────
+async function doExercises(btn) {
+  setActionBtnLoading(btn, true, '')
+  const fc = getFeatureContainer()
+  const panelId = 'ex-' + Date.now()
+
+  const loadDiv = document.createElement('div')
+  loadDiv.className = 'feature-panel'
+  loadDiv.id = panelId
+  loadDiv.innerHTML = `
+    <div class="feature-panel-header">
+      <div class="feature-panel-title">✏️ Exercise Questions</div>
+    </div>
+    <div class="feature-panel-body">
+      <div class="panel-loading">
+        <div class="dot"></div><div class="dot" style="animation-delay:0.2s"></div><div class="dot" style="animation-delay:0.4s"></div>
+        <span>Generating exercises based on ${currentSessionContexts.length} context(s)...</span>
+      </div>
+    </div>`
+  fc.appendChild(loadDiv)
+
+  try {
+    const res = await fetch(`${API}/exercises`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        topic:         currentSessionTopic,
+        all_contexts:  currentSessionContexts,
+        num_questions: 4,
+      })
+    })
+    const data = await res.json()
+
+    const exercisesHtml = (data.exercises || []).map((ex, i) => `
+      <div class="exercise-item">
+        <div class="exercise-type">${ex.type || 'exercise'}</div>
+        <div class="exercise-q-text">${i+1}. ${escHtml(ex.question)}</div>
+        ${ex.hint ? `<div class="exercise-hint">💡 Hint: ${escHtml(ex.hint)}</div>` : ''}
+        <button class="show-answer-btn" onclick="toggleAnswer(this)">Show sample answer</button>
+        <div class="exercise-answer">${escHtml(ex.sample_answer || '')}</div>
+      </div>`).join('')
+
+    document.getElementById(panelId).innerHTML = `
+      <div class="feature-panel-header">
+        <div class="feature-panel-title">✏️ Exercise Questions</div>
+        <span style="font-size:12px;color:var(--text3)">Based on ${currentSessionContexts.length} context(s)</span>
+      </div>
+      <div class="feature-panel-body">
+        ${exercisesHtml || '<div style="color:var(--text3)">No exercises generated. Try adding more context first.</div>'}
+      </div>`
+
+  } catch(e) {
+    document.getElementById(panelId).innerHTML = `<div class="error-box">The backend server is not connected. Please try again later.</div>`
+  }
+
+  setActionBtnLoading(btn, false, '<span class="btn-icon">✏️</span> Exercise Questions')
+}
+
+function toggleAnswer(btn) {
+  const ans = btn.nextElementSibling
+  if (ans.style.display === 'block') {
+    ans.style.display = 'none'
+    btn.textContent = 'Show sample answer'
+  } else {
+    ans.style.display = 'block'
+    btn.textContent = 'Hide answer'
+  }
+}
+
+// ── Related Links ─────────────────────────────────────────────────────────────
+async function doRelatedLinks(btn) {
+  setActionBtnLoading(btn, true, '')
+  const fc = getFeatureContainer()
+  const panelId = 'links-' + Date.now()
+
+  const loadDiv = document.createElement('div')
+  loadDiv.className = 'feature-panel'
+  loadDiv.id = panelId
+  loadDiv.innerHTML = `
+    <div class="feature-panel-header">
+      <div class="feature-panel-title">🔗 Related Links</div>
+    </div>
+    <div class="feature-panel-body">
+      <div class="panel-loading">
+        <div class="dot"></div><div class="dot" style="animation-delay:0.2s"></div><div class="dot" style="animation-delay:0.4s"></div>
+        <span>Fetching helpful resources...</span>
+      </div>
+    </div>`
+  fc.appendChild(loadDiv)
+
+  try {
+    const res = await fetch(`${API}/related-links`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ topic: currentSessionTopic })
+    })
+    const data = await res.json()
+
+    const linksHtml = (data.links || []).map(link => `
+      <a href="${link.url}" target="_blank" rel="noopener noreferrer" class="link-item">
+        <div class="link-icon">${link.icon || '🔗'}</div>
+        <div class="link-info">
+          <div class="link-title">${escHtml(link.title)}</div>
+          <div class="link-desc">${escHtml(link.description || '')}</div>
+        </div>
+        <div class="link-source">${escHtml(link.source || '')}</div>
+      </a>`).join('')
+
+    document.getElementById(panelId).innerHTML = `
+      <div class="feature-panel-header">
+        <div class="feature-panel-title">🔗 Related Links</div>
+      </div>
+      <div class="feature-panel-body">
+        ${linksHtml || '<div style="color:var(--text3)">No links found for this topic.</div>'}
+      </div>`
+
+  } catch(e) {
+    document.getElementById(panelId).innerHTML = `<div class="error-box">The backend server is not connected. Please try again later.</div>`
+  }
+
+  setActionBtnLoading(btn, false, '<span class="btn-icon">🔗</span> Related Links')
+}
+
+async function uploadPDF(input) {
+  const file = input.files[0]
+  if (!file) return
+  const status = document.getElementById('upload-status')
+  const label  = document.getElementById('upload-label')
+  status.textContent = 'Uploading...'
+  label.textContent  = 'Uploading...'
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res  = await fetch(`${API}/upload`, { method: 'POST', body: formData })
+    const data = await res.json()
+    if (data.success) {
+      status.textContent = `✓ ${data.name} (${data.pages} pages)`
+      status.style.color = 'var(--green)'
+      label.textContent  = 'Upload another PDF'
+      // Auto-select the newly uploaded PDF
+      selectPdf(data.file_id, data.name)
+      loadPdfList()
+    } else {
+      status.textContent = 'Upload failed'
+      status.style.color = '#f87171'
+      label.textContent  = 'Upload PDF resource'
+    }
+  } catch(e) {
+    status.textContent = 'Upload error — is server running?'
+    status.style.color = '#f87171'
+    label.textContent  = 'Upload PDF resource'
+  }
+  input.value = ''
+}
+
+async function loadPdfList() {
+  try {
+    const res   = await fetch(`${API}/files`)
+    const files = await res.json()
+    const list  = document.getElementById('pdf-list')
+    if (!files.length) { list.innerHTML = ''; return }
+    list.innerHTML = files.map(f => `
+      <div style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;background:${activePdfId===f.id?'rgba(74,222,128,0.1)':'transparent'};cursor:pointer;margin-bottom:2px;"
+           onclick="selectPdf('${f.id}','${f.name.replace(/'/g,"\\'")}')">
+        <span style="font-size:12px;">📄</span>
+        <span style="font-size:11px;color:${activePdfId===f.id?'var(--green)':'var(--text2)'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.name}</span>
+        <span style="font-size:10px;color:var(--text3);">${f.pages}p</span>
+        <button onclick="event.stopPropagation();deletePdf('${f.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;padding:0 2px;">✕</button>
+      </div>`).join('')
+  } catch(e) {}
+}
+
+function selectPdf(id, name) {
+  activePdfId   = id
+  activePdfName = name
+  const row     = document.getElementById('pdf-context-row')
+  const nameEl  = document.getElementById('active-pdf-name')
+  row.style.display  = 'flex'
+  nameEl.textContent = name.length > 20 ? name.slice(0,20)+'...' : name
+  loadPdfList()
+}
+
+function clearPdfContext() {
+  activePdfId   = null
+  activePdfName = ''
+  document.getElementById('pdf-context-row').style.display = 'none'
+  document.getElementById('chapter-input').value = ''
+  loadPdfList()
+}
+
+async function deletePdf(id) {
+  await fetch(`${API}/files/${id}`, { method: 'DELETE' })
+  if (activePdfId === id) clearPdfContext()
+  loadPdfList()
+}
+
+function addToHistory(topic, mode) {
+  history.unshift({ topic, mode })
+  if (history.length > 20) history.pop()
+  renderHistory()
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list')
+  if (!history.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 10px;">No history yet</div>'
+    return
+  }
+  const icons = { 'Concept-First Learning':'📖', 'Reverse Engineering':'🔬', 'Visual Learning':'🗺️' }
+  list.innerHTML = history.map(h => `
+    <div class="history-item" onclick="tryExample('${escHtml(h.topic)}')">
+      <div class="history-topic">${escHtml(h.topic)}</div>
+      <div class="history-mode">${icons[h.mode] || ''} ${h.mode}</div>
+    </div>`).join('')
+}
+// ══════════════════════════════════════════════════════
+// IDEA 7 — Teaching Format Selector
+// ══════════════════════════════════════════════════════
+function selectFormat(btn) {
+  const fmt = btn.dataset.fmt
+  if (fmt !== 'text') {
+    // Coming soon — show a brief visual cue
+    btn.style.animation = 'none'
+    btn.textContent = '🚧 Coming soon!'
+    setTimeout(() => {
+      btn.innerHTML = btn.dataset.fmt === 'visual' ? '🖼️ Image <span class="format-badge">SOON</span>'
+        : btn.dataset.fmt === 'video' ? '🎬 Video <span class="format-badge">SOON</span>'
+        : '🧊 3D <span class="format-badge">SOON</span>'
+    }, 1400)
+    return
+  }
+  document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  currentFormat = fmt
+}
+
+// ══════════════════════════════════════════════════════
+// IDEA 2 — Pre-Assessment / Knowledge Check
+// ══════════════════════════════════════════════════════
+function selectPrecheck(el, level) {
+  document.querySelectorAll('.precheck-opt').forEach(o => o.classList.remove('selected'))
+  el.classList.add('selected')
+  precheckLevel = level
+}
+
+function closePrecheck(skipped) {
+  document.getElementById('precheck-overlay').classList.remove('open')
+  if (skipped) precheckLevel = 'skip'
+  if (pendingTopic) {
+    document.getElementById('topic-input').value = pendingTopic
+    pendingTopic = null
+    submit()
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// IDEA 8 — Study Timer & Breaks
+// ══════════════════════════════════════════════════════
+function startTimer(minutes) {
+  if (timerInterval) clearInterval(timerInterval)
+  timerTotal     = minutes * 60
+  timerRemaining = timerTotal
+  timerPaused    = false
+  document.getElementById('timer-bar').classList.add('active')
+  document.getElementById('timer-label').textContent = `Study session (${minutes} min)`
+  updateTimerDisplay()
+  timerInterval = setInterval(tickTimer, 1000)
+}
+
+function tickTimer() {
+  if (timerPaused) return
+  timerRemaining--
+  updateTimerDisplay()
+  if (timerRemaining <= 0) {
+    clearInterval(timerInterval)
+    timerInterval = null
+    document.getElementById('timer-bar').classList.remove('active')
+    startBreak(5)
+  }
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timerRemaining / 60)
+  const s = timerRemaining % 60
+  const str = `${m}:${s.toString().padStart(2,'0')}`
+  const pct = (timerRemaining / timerTotal) * 100
+  const disp = document.getElementById('timer-display')
+  const fill = document.getElementById('timer-fill')
+  disp.textContent = str
+  fill.style.width = pct + '%'
+  const warn = timerRemaining < 300  // last 5 min
+  disp.className = 'timer-display' + (warn ? ' warning' : '')
+  fill.className  = 'timer-fill'   + (warn ? ' warning' : '')
+}
+
+function pauseTimer() {
+  timerPaused = !timerPaused
+  document.getElementById('timer-pause-btn').textContent = timerPaused ? 'Resume' : 'Pause'
+}
+
+function stopTimer() {
+  if (timerInterval) clearInterval(timerInterval)
+  timerInterval = null
+  document.getElementById('timer-bar').classList.remove('active')
+}
+
+function startBreak(minutes) {
+  breakRemaining = minutes * 60
+  document.getElementById('break-overlay').classList.add('open')
+  updateBreakDisplay()
+  breakInterval = setInterval(() => {
+    breakRemaining--
+    updateBreakDisplay()
+    if (breakRemaining <= 0) endBreak()
+  }, 1000)
+}
+
+function updateBreakDisplay() {
+  const m = Math.floor(breakRemaining / 60)
+  const s = breakRemaining % 60
+  document.getElementById('break-timer-display').textContent = `${m}:${s.toString().padStart(2,'0')}`
+}
+
+function endBreak() {
+  if (breakInterval) clearInterval(breakInterval)
+  breakInterval = null
+  document.getElementById('break-overlay').classList.remove('open')
+  // reset precheck for next topic
+  precheckLevel = null
+}
+
+// ══════════════════════════════════════════════════════
+// IDEAS 4 & 5 — Compare Sessions
+// ══════════════════════════════════════════════════════
+function toggleCompareView() {
+  compareMode = !compareMode
+  const view    = document.getElementById('compare-view')
+  const resArea = document.getElementById('response-area')
+  const inputB  = document.getElementById('input-area-block')
+  const btn     = document.getElementById('compare-toggle-btn')
+
+  if (compareMode) {
+    view.classList.add('open')
+    resArea.style.display = 'none'
+    inputB.style.display  = 'none'
+    btn.classList.add('active')
+    btn.textContent = '✕ Exit Compare'
+    populateCompareSelects()
+  } else {
+    view.classList.remove('open')
+    resArea.style.display = 'block'
+    inputB.style.display  = 'block'
+    btn.classList.remove('active')
+    btn.textContent = '⇄ Compare Sessions'
+  }
+}
+
+function populateCompareSelects() {
+  const opts = history.map((h, i) =>
+    `<option value="${i}">${h.topic.slice(0,32)}${h.topic.length>32?'…':''} · ${h.mode.split(' ')[0]}</option>`
+  ).join('')
+  const base = '<option value="">Select session</option>'
+  document.getElementById('compare-select-left').innerHTML  = base + opts
+  document.getElementById('compare-select-right').innerHTML = base + opts
+}
+
+function loadComparePane(side, idx) {
+  const bodyId  = `compare-body-${side}`
+  const topicId = `compare-topic-${side}`
+  const body    = document.getElementById(bodyId)
+  const topicEl = document.getElementById(topicId)
+
+  if (idx === '') {
+    topicEl.textContent = '—'
+    body.innerHTML = '<div class="compare-empty"><div class="compare-empty-icon">📄</div><div>Select a session from history to compare</div></div>'
+    return
+  }
+
+  const session = history[parseInt(idx)]
+  if (!session) return
+  topicEl.textContent = session.topic
+
+  if (compareHistory[idx]) {
+    body.innerHTML = `<div class="md-body">${renderMarkdown(compareHistory[idx].raw || compareHistory[idx].explanation || '')}</div>`
+    renderMermaidBlocks()
+    return
+  }
+
+  body.innerHTML = '<div class="panel-loading"><div class="dot"></div><span>Loading session...</span></div>'
+  // Since history is in-memory (no persistent storage yet), show what we have
+  body.innerHTML = `
+    <div style="padding:12px 0;">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">Topic</div>
+      <div style="font-size:14px;color:var(--text);margin-bottom:16px;">${escHtml(session.topic)}</div>
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">Mode</div>
+      <div style="font-size:13px;color:var(--text2);">${escHtml(session.mode)}</div>
+      <div style="margin-top:16px;padding:12px;background:var(--bg3);border-radius:var(--radius-sm);font-size:12px;color:var(--text3);">
+        Full response available when Brosil adds session persistence to the backend via <code>/history</code> endpoint returning raw content.
+      </div>
+    </div>`
+}
+
+// ══════════════════════════════════════════════════════
+// IDEA 9 — Final Assessment / Exam
+// ══════════════════════════════════════════════════════
+async function doExam(trigger) {
+  trigger.style.display = 'none'
+  const fc = document.getElementById('features-container')
+  const panelId = 'exam-' + Date.now()
+
+  const loadDiv = document.createElement('div')
+  loadDiv.className = 'exam-panel'
+  loadDiv.id = panelId
+  loadDiv.innerHTML = `
+    <div class="exam-header">
+      <div class="exam-title">🎓 Final Assessment — ${escHtml(currentSessionTopic)}</div>
+    </div>
+    <div class="exam-body">
+      <div class="panel-loading">
+        <div class="dot"></div><div class="dot" style="animation-delay:0.2s"></div><div class="dot" style="animation-delay:0.4s"></div>
+        <span>Building your final exam from all session content...</span>
+      </div>
+    </div>`
+  fc.appendChild(loadDiv)
+
+  try {
+    const res = await fetch(`${API}/exercises`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        topic: currentSessionTopic,
+        all_contexts: currentSessionContexts,
+        num_questions: 5,
+      })
+    })
+    const data = await res.json()
+    const questions = data.exercises || []
+
+    const qsHtml = questions.map((q, i) => `
+      <div class="exam-q">
+        <div class="exam-q-num">Question ${i+1} · <span style="text-transform:capitalize;">${q.type || 'written'}</span></div>
+        <div class="exam-q-text">${escHtml(q.question)}</div>
+        ${q.hint ? `<div style="font-size:11px;color:var(--text3);font-style:italic;margin-bottom:8px;">💡 ${escHtml(q.hint)}</div>` : ''}
+        <textarea class="exam-input" id="exam-ans-${i}" placeholder="Write your answer here…"></textarea>
+        <div class="exam-result" id="exam-res-${i}">
+          <strong style="color:var(--green);">Sample answer:</strong><br/>${escHtml(q.sample_answer || '')}
+        </div>
+        <button class="show-answer-btn" onclick="revealExamAnswer(${i})">Show model answer</button>
+      </div>`).join('')
+
+    document.getElementById(panelId).innerHTML = `
+      <div class="exam-header">
+        <div class="exam-title">🎓 Final Assessment — ${escHtml(currentSessionTopic)}</div>
+        <span style="font-size:11px;color:var(--text3);">${questions.length} questions · Based on your full session</span>
+      </div>
+      <div class="exam-body">
+        <div class="exam-score-bar">
+          <div class="exam-score-num">${questions.length}</div>
+          <div><div style="font-size:13px;font-weight:500;color:var(--text2);">Questions</div><div class="exam-score-label">Answer all, then check your work</div></div>
+        </div>
+        ${qsHtml}
+      </div>`
+
+  } catch(e) {
+    document.getElementById(panelId).innerHTML =
+      `<div class="error-box">The backend server is not connected. Please try again later.</div>`
+  }
+}
+
+function revealExamAnswer(i) {
+  const res = document.getElementById(`exam-res-${i}`)
+  const btn = res.previousElementSibling
+  if (res.style.display === 'block') {
+    res.style.display = 'none'
+    btn.textContent = 'Show model answer'
+  } else {
+    res.style.display = 'block'
+    btn.textContent = 'Hide answer'
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// IDEA 10 — Export / Preview Options
+// ══════════════════════════════════════════════════════
+function exportMarkdown() {
+  if (!currentSessionRawData) return
+  const md = `# ${currentSessionTopic}\n\n**Mode:** ${currentSessionMode}\n\n---\n\n${currentSessionRawData.raw || currentSessionRawData.explanation || ''}`
+  const blob = new Blob([md], {type: 'text/markdown'})
+  const a    = document.createElement('a')
+  a.href     = URL.createObjectURL(blob)
+  a.download = `${currentSessionTopic.replace(/[^a-z0-9]/gi,'_').toLowerCase()}_learnpilot.md`
+  a.click()
+}
+
+function exportPDF() {
+  window.print()
+}
+
+function copyToClipboard() {
+  if (!currentSessionRawData) return
+  const text = currentSessionRawData.raw || currentSessionRawData.explanation || ''
+  navigator.clipboard.writeText(text).then(() => {
+    const btns = document.querySelectorAll('.export-btn')
+    btns.forEach(b => { if (b.textContent.includes('Copy')) { b.textContent = '✓ Copied!'; setTimeout(() => { b.innerHTML = '📋 Copy text' }, 1800) } })
+  })
+}
 
 </body>
 </html>
